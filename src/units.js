@@ -13,6 +13,8 @@ Game.createUnit = function (typeId, team, col, row) {
     team,
     col,
     row,
+    x: pos.x,
+    y: pos.y,
     wounds: 0,        // kalıcı yıpranma (turlar arası taşınır)
     hp: def.hp,
     maxHp: def.hp,

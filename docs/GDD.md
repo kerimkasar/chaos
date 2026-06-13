@@ -93,10 +93,11 @@ Neden böyle: **denge `config.js`'te tek yerde**, **savaş mantığı `battle.js
 ## 8. v2 eklentileri — Darkest Dungeon dersleri
 DD'nin asıl dersi *"HP'nin ötesinde ikinci bir kaynak + sınırlı kadro"*. Bunu refleks/şans katmadan, sistemlerle aldık:
 
-- **Yıpranma (attrition):** Birimlerin kalıcı `wounds` değeri vardır; etkin can = `maxHP − wounds`. Savaşan birim aldığı hasarın bir kısmını kalıcı yaraya çevirir (ölürse büyük yara, tavanla sınırlı). Yedekte dinlenen birim her tur iyileşir. → "Aynı A-takımını her tur süremezsin."
-- **Saha (tedarik) limiti:** Aynı anda sahaya dizilebilecek birim sayısı tura göre artar (`deployCap`). Yıpranmayı anlamlı kılan kısıt budur: kimi dövüştür, kimi dinlendir.
+- **Yıpranma (attrition):** Birimlerin kalıcı `wounds` değeri vardır; etkin can = `maxHP − wounds`. Savaşan birim aldığı hasarın bir kısmını kalıcı yaraya çevirir (ölürse büyük yara, tavanla sınırlı). Yedekte dinlenen birim her tur iyileşir. Yıpranan birim zayıfladığı için onu **gönüllü olarak** yedeğe alıp dinlendirmek bir karar olur.
+- **Karakter sınırı yok — ekonomi tek kısıt:** Sahaya istediğin kadar birim dizebilirsin; sınır yalnızca **paran** (ve fiziksel tahta yeri). Sabit bir kadro limiti yoktur.
 - **Şifacı (Medic):** Hasar vermez; savaşta en yaralı müttefiki iyileştirir. Birimlerin net hasarını düşürerek yıpranmayı dolaylı azaltır → ikili değer.
-- **Yedek (bench) + sürükle-bırak:** Satın alınan birim önce yedeğe düşer (sol panel, dükkânın altında). Oyuncu sürükleyerek sahaya dizer / yerini değiştirir / yedeğe alır / satar. Konum önemlidir: tankı öne, kırılganları/şifacıyı arkaya.
+- **Yedek kulübesi (bench) + sürükle-bırak:** Satın alınan birim önce yedeğe düşer (sol panel, dükkânın altında). Oyuncu sürükleyerek sahaya dizer / yerini değiştirir / istediği zaman yedeğe alır / satar. Konum önemlidir: tankı öne, kırılganları/şifacıyı arkaya.
+- **Düşman önizlemesi + tekrar deneme:** Her turun düşman dalgası planlama safhasında **soluk** olarak gösterilir; oyuncu dizilişini ona göre kurar. Savaş kaybedilirse tur ilerlemez — bir can gider ve **aynı dalga** tekrar oynanır (öğren, dizilişini değiştir, yen). Can biterse oyun biter.
 
 **Bilinçli tasarım duruşu:** DD'nin gerilimi varyanstan (stress/krit/isabet) gelir; biz **deterministik** kaldık. Derinlik *sistemlerden* gelir (pozisyon, yıpranma, saha limiti, şifa), zardan değil — "satranç gibi strateji" kimliği korunur.
 

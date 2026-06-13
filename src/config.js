@@ -22,11 +22,7 @@ Game.config = {
   sellRefund: 1,
   maxRound: 10,
 
-  // Saha (tedarik) limiti — aynı anda kaç birim dövüşebilir.
-  // Tura göre artar; yıpranma sistemini anlamlı kılan kısıt budur.
-  baseDeployCap: 4,
-  deployCapPerRounds: 2, // her 2 turda +1
-  maxDeployCap: 8,
+  // Karakter sayısı sınırı YOK — tek sınır para (ve fiziksel tahta yeri).
 
   // Yıpranma (attrition)
   woundFactor: 0.20,    // savaşta kaybedilen canın %20'si kalıcı yaraya döner
@@ -54,11 +50,6 @@ Game.util = {
   },
   dist(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
-  },
-  // Bir turdaki saha limiti
-  deployCap(round) {
-    const c = Game.config;
-    return Math.min(c.maxDeployCap, c.baseDeployCap + Math.floor((round - 1) / c.deployCapPerRounds));
   },
   // Yaralara göre etkin maksimum can
   effMaxHp(u) {

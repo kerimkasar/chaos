@@ -8,6 +8,7 @@ Game.state = {
   round: 1,
   bench: [],      // sahip olunan ama sahada olmayan birimler (dinlenir)
   board: [],      // sahaya dizilmiş birimler (dövüşür)
+  wave: [],       // bu turun düşman dalgası (önizleme + savaş aynı dalga)
   offers: [],     // dükkân teklifleri (typeId)
   message: '',
   outcome: '',
@@ -40,9 +41,11 @@ Game.main = {
     s.round = 1;
     s.bench = [];
     s.board = [];
+    s.wave = [];
     s.outcome = '';
     this.rollShop();
-    s.message = 'Dükkândan al → yedeğe düşer → sürükleyip sahaya diz → Savaş.';
+    this.setWave();
+    s.message = 'Sağdaki soluk düşmanlar bu turun dalgası — ona göre diz. Sonra Savaş.';
 
     this.lastTime = performance.now();
     if (!this._looping) { this._looping = true; requestAnimationFrame((t) => this.loop(t)); }
@@ -56,6 +59,11 @@ Game.main = {
     for (let i = 0; i < Game.config.shopSize; i++) {
       Game.state.offers.push(types[Math.floor(Math.random() * types.length)]);
     }
+  },
+
+  // Bu turun düşman dalgasını üret (önizleme + savaş aynı dalgayı kullanır).
+  setWave() {
+    Game.state.wave = Game.makeWave(Game.state.round);
   },
 
   buy(index) {
@@ -98,7 +106,8 @@ Game.main = {
     if (s.board.length === 0) { this.flash('Önce sahaya birim diz!'); return; }
 
     const playerUnits = s.board.map((u) => Game.cloneForBattle(u, 'player'));
-    const enemyUnits = Game.makeWave(s.round);
+    // Önizlemede gösterilen dalganın taze kopyası (s.wave bozulmasın diye)
+    const enemyUnits = s.wave.map((w) => Game.createUnit(w.typeId, 'enemy', w.col, w.row));
     Game.battle.start(playerUnits, enemyUnits);
     s.phase = 'battle';
     s.message = `Tur ${s.round}: savaş başladı...`;
@@ -132,16 +141,17 @@ Game.main = {
       const gain = cfg.income + interest + cfg.winBonus;
       s.gold += gain;
       s.message = `Tur ${s.round} kazanıldı! +${gain} altın (faiz ${interest}).`;
+      s.round++;
+      if (s.round > cfg.maxRound) { s.phase = 'gameover'; s.outcome = 'win'; this.syncUI(); return; }
+      this.setWave(); // yeni bölüm → yeni düşman dalgası
     } else {
-      this.banner('KAYBETTİN');
+      this.banner('KAYBETTİN — tekrar dene');
       s.lives -= 1;
       s.gold += cfg.income;
-      s.message = `Tur ${s.round} kaybedildi. -1 can, +${cfg.income} altın.`;
+      s.message = `Tur ${s.round} geçilemedi. -1 can (kalan ${s.lives}), +${cfg.income} altın. Dizilişini değiştir, AYNI düşmanı tekrar dene.`;
+      if (s.lives <= 0) { s.phase = 'gameover'; s.outcome = 'lose'; this.syncUI(); return; }
+      // Aynı tur ve aynı dalga kalır → bölümü tekrar oyna
     }
-    s.round++;
-
-    if (s.lives <= 0) { s.phase = 'gameover'; s.outcome = 'lose'; this.syncUI(); return; }
-    if (s.round > cfg.maxRound) { s.phase = 'gameover'; s.outcome = 'win'; this.syncUI(); return; }
 
     s.phase = 'prep';
     this.rollShop();
@@ -225,9 +235,7 @@ Game.main = {
       return;
     }
     if (from === 'bench') {
-      if (s.board.length >= Game.util.deployCap(s.round)) {
-        this.flash(`Saha dolu (limit ${Game.util.deployCap(s.round)})`); return;
-      }
+      // Karakter sayısı sınırı yok — tek sınır paran ve tahtadaki boş kare.
       const i = s.bench.indexOf(unit);
       if (i !== -1) s.bench.splice(i, 1);
       s.board.push(unit);
@@ -265,7 +273,7 @@ Game.main = {
       Game.render.draw(Game.battle.units, 'battle');
       if (status === 'win' || status === 'lose') this.resolveBattle(status);
     } else {
-      Game.render.draw(s.board, 'prep', this.drag ? this.hover : null);
+      Game.render.draw(s.board, 'prep', this.drag ? this.hover : null, s.wave);
       if (s.phase === 'gameover') {
         Game.render.banner(s.outcome === 'win' ? 'ZAFER!' : 'OYUN BİTTİ');
       }
@@ -280,11 +288,10 @@ Game.main = {
   // ---- UI (DOM) ----
   syncUI() {
     const s = Game.state;
-    const cap = Game.util.deployCap(s.round);
     document.getElementById('round').textContent = `${s.round}/${Game.config.maxRound}`;
     document.getElementById('gold').textContent = s.gold;
     document.getElementById('lives').textContent = s.lives;
-    document.getElementById('deploy').textContent = `${s.board.length}/${cap}`;
+    document.getElementById('deploy').textContent = `${s.board.length}`;
     document.getElementById('message').textContent = s.message;
 
     // Dükkân

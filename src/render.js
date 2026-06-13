@@ -12,7 +12,8 @@ Game.render = {
   },
 
   // mode: 'prep' (sahip olunan birimler, yıpranma gösterilir) | 'battle' (canlı)
-  draw(units, mode, highlight) {
+  // preview: planlama safhasında soluk gösterilecek gelecek düşman dalgası
+  draw(units, mode, highlight, preview) {
     const ctx = this.ctx;
     const cfg = Game.config;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -79,6 +80,29 @@ Game.render = {
       }
       ctx.fillStyle = u.team === 'player' ? (pct < 0.6 ? '#e8a13a' : '#4caf50') : '#e53935';
       ctx.fillRect(bx, by, bw * pct, bh);
+    }
+
+    // Planlama önizlemesi: gelecek düşman dalgası (soluk, kesik çizgili)
+    if (preview && preview.length) {
+      ctx.globalAlpha = 0.4;
+      for (const u of preview) {
+        ctx.fillStyle = u.def.color;
+        ctx.beginPath();
+        ctx.arc(u.x, u.y, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.setLineDash([5, 4]);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#0b0b12';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(u.def.name[0], u.x, u.y + 1);
+      }
+      ctx.globalAlpha = 1;
     }
   },
 
