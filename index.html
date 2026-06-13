@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto-Battler</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #0b0b12; color: #e6e6f0;
+      font-family: system-ui, sans-serif; padding: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      -webkit-user-select: none; user-select: none; touch-action: none;
+    }
+    h1 { margin: 4px 0; font-size: 20px; letter-spacing: 1px; }
+    .topbar {
+      display: flex; gap: 22px; font-size: 17px;
+      background: #15151f; padding: 10px 20px; border-radius: 10px;
+    }
+    .topbar b { color: #ffd166; }
+    #message { min-height: 22px; color: #9aa0c0; font-size: 14px; }
+
+    .layout { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+    .panel {
+      width: 250px; background: #13131d; border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #7a7f9c; margin: 2px 0; }
+
+    #shop { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card {
+      min-height: 56px; background: #1a1a26; color: #fff;
+      border: 2px solid #444; border-radius: 9px; padding: 6px; cursor: pointer; text-align: center;
+    }
+    .card:hover:not(.empty) { background: #22222f; }
+    .card.empty { opacity: 0.3; cursor: default; }
+    .cname { font-weight: bold; font-size: 14px; }
+    .cstat { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+    #bench { display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
+    .bench-card {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #1a1a26; border: 2px solid #444; border-left-width: 5px;
+      border-radius: 8px; padding: 7px 10px; font-size: 13px; cursor: grab;
+    }
+    .bench-card:active { cursor: grabbing; }
+    .bench-card .wear { color: #e8a13a; font-size: 11px; }
+    .bench-card .ready { color: #4caf50; font-size: 11px; }
+    .bench-empty { color: #555; font-size: 12px; text-align: center; padding: 8px; }
+
+    #sellzone {
+      border: 2px dashed #5a3a3a; color: #b06; border-radius: 8px;
+      text-align: center; padding: 8px; font-size: 13px; color: #c9697f;
+    }
+
+    canvas { background: #10101a; border-radius: 12px; max-width: 100%; height: auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+    .controls { display: flex; gap: 10px; margin-top: 4px; }
+    .btn { background: #2d2d44; color: #fff; border: none; padding: 10px 18px;
+      border-radius: 8px; font-size: 15px; cursor: pointer; }
+    .btn:hover:not(:disabled) { background: #3a3a5a; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    #fight { background: #2e7d32; }
+    #fight:hover:not(:disabled) { background: #388e3c; }
+
+    .drag-ghost {
+      position: fixed; transform: translate(-50%, -50%); pointer-events: none;
+      padding: 6px 12px; border-radius: 8px; color: #0b0b12; font-weight: bold;
+      font-size: 13px; z-index: 1000; opacity: 0.9;
+    }
+    .hint { font-size: 12px; color: #666; max-width: 760px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>AUTO-BATTLER · prototip</h1>
+
+  <div class="topbar">
+    <span>Tur <b id="round">1/10</b></span>
+    <span>Altın <b id="gold">0</b></span>
+    <span>Can <b id="lives">0</b></span>
+    <span>Sahada <b id="deploy">0/4</b></span>
+  </div>
+
+  <div id="message"></div>
+
+  <div class="layout">
+    <!-- SOL: dükkân + altında yedek -->
+    <div class="panel">
+      <h2>Dükkân</h2>
+      <div id="shop"></div>
+      <button class="btn" id="reroll" onclick="GameUI.reroll()">Reroll (2💰)</button>
+
+      <h2>Yedek (dinlenir)</h2>
+      <div id="bench"></div>
+
+      <div id="sellzone">🗑 Buraya sürükle → Sat</div>
+    </div>
+
+    <!-- SAĞ: tahta -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <canvas id="board"></canvas>
+      <div class="controls">
+        <button class="btn" id="fight" onclick="GameUI.fight()">⚔ Savaş</button>
+        <button class="btn" onclick="GameUI.restart()">↺ Yeniden</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">
+    Dükkândan al → <b>yedeğe</b> düşer · Yedekten <b>sürükleyip</b> sahaya diz (saha limiti kadar) ·
+    Sahadaki birimi sürükleyerek yerini değiştir / yedeğe al / sat ·
+    Savaşanlar <b>yıpranır</b>, yedektekiler <b>dinlenir</b> · Şifacı savaşta iyileştirir.
+  </p>
+
+  <script src="src/config.js"></script>
+  <script src="src/units.js"></script>
+  <script src="src/battle.js"></script>
+  <script src="src/render.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
